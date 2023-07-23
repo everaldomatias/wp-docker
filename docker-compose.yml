@@ -1,0 +1,43 @@
+version: '2'
+
+  services:
+    wordpress:
+      stdin_open: true
+      tty: true
+      build:
+        context: .
+        dockerfile: ./compose/local/wordpress/Dockerfile
+      depends_on:
+        - mariadb
+      ports:
+        - 80:80
+      environment:
+        WORDPRESS_DB_HOST: mariadb
+        WORDPRESS_DB_USER: wordpress
+        WORDPRESS_DB_PASSWORD: wordpress
+        WORDPRESS_DEBUG: 1
+      volumes:
+        - ./wp-root:/var/www/html/
+        - ./compose/local/wordpress/htaccess:/var/www/html/.htaccess
+        - ./compose/local/wordpress/php/extra.ini:/usr/local/etc/php/conf.d/extra.ini
+
+      watcher:
+        build:
+          context: .
+          dockerfile: ./compose/local/watcher/Dockerfile
+        volumes:
+          - ./themes/wp-theme:/app
+      
+      mariadb:
+        image: mariadb:10.4
+        volumes:
+          - ./mariadb_data:/var/lib/mysql
+          - ./compose/local/mariadb/data:/docker-entrypoint-initdb.d
+        environment:
+          MYSQL_ROOT_PASSWORD: therootpassword
+          MYSQL_DATABASE: wordpress
+          MYSQL_USER: wordpress
+          MYSQL_PASSWORD: wordpress
+
+volumes:
+  mariadb_data:
